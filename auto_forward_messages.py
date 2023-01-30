@@ -9,8 +9,7 @@ import time,json,os,re
 
 def cache():
 	cache =f'{chats["from_chat_id"]}_{chats["to_chat_id"]}.json'
-	CACHE_FILE=f'posteds/{cache}'
-	return CACHE_FILE
+	return f'posteds/{cache}'
 
 def is_chat_id(chat):
 	chat=re.match(r'^(-100)\d{10}|(^\d{10})',chat)
@@ -87,19 +86,15 @@ def filter_messages(client):
 				if msg_type in filter:
 					list.append(message.id)
 			else:
-				list.append(message.id)	
-		if message.text:
-			if filter is not None:
-				if "text" in filter:
-					list.append(message.id)
-			else:
 				list.append(message.id)
-		if message.poll:
-			if filter is not None:
-				if "poll" in filter:
-					list.append(message.id)
-			else:
-				list.append(message.id)
+		if message.text and (
+			filter is not None and "text" in filter or filter is None
+		):
+			list.append(message.id)
+		if message.poll and (
+			filter is not None and "poll" in filter or filter is None
+		):
+			list.append(message.id)
 	return list
 
 def get_ids(client):
@@ -110,12 +105,11 @@ def get_ids(client):
 	)
 	chat_ids=filter_messages(client)
 	chat_ids.sort()
-	if options.resume:
-		if os.path.exists(cache()):
-			with open(cache(),"r") as file:
-				last_id = json.loads(file.read())
-			n=chat_ids.index(last_id)+1
-			chat_ids=chat_ids[n:]
+	if options.resume and os.path.exists(cache()):
+		with open(cache(),"r") as file:
+			last_id = json.loads(file.read())
+		n=chat_ids.index(last_id)+1
+		chat_ids=chat_ids[n:]
 	if limit != 0:
 		chat_ids=chat_ids[:limit]
 	return chat_ids
